@@ -1,0 +1,30 @@
+name: Build Rust static binary (musl)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build in muslrust Docker (Alpine, static)
+      uses: addnab/docker-run-action@v3
+      with:
+        image: clux/muslrust:stable
+        options: -v ${{ github.workspace }}:/work -w /work
+        run: |
+          apk add --no-cache krb5-dev
+          cargo build --release --target x86_64-unknown-linux-musl
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: rust-static-binary
+        path: target/x86_64-unknown-linux-musl/release/*
