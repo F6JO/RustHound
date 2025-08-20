@@ -1,5 +1,4 @@
 name: Build Rust static binary (musl)
-
 on:
   push:
     branches: [ main ]
@@ -9,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -17,7 +15,7 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y musl-tools libkrb5-dev clang llvm-dev libclang-dev
+        sudo apt-get install -y musl-tools clang llvm-dev libclang-dev
 
     - name: Set up Rust
       uses: actions-rs/toolchain@v1
@@ -32,17 +30,16 @@ jobs:
     - name: Update time crate
       run: cargo update -p time --precise 0.3.36
 
-    - name: Build release static musl
+    - name: Build release static musl (only TLS, no gssapi)
       env:
         LIBCLANG_PATH: /usr/lib/llvm-14/lib
       run: |
-        # 检查 libclang 路径，如需可动态查找
         if [ ! -e /usr/lib/llvm-14/lib/libclang.so ]; then
           LIBCLANG_PATH=$(find /usr/lib/llvm-* -name libclang.so | head -n1 | xargs dirname)
           echo "Found libclang.so at: $LIBCLANG_PATH"
           export LIBCLANG_PATH
         fi
-        cargo build --release --target x86_64-unknown-linux-musl
+        cargo build --release --target x86_64-unknown-linux-musl --no-default-features --features nogssapi
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
