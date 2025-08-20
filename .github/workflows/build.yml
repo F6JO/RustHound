@@ -14,21 +14,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Rust (for lockfile format stability)
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        profile: minimal
-        override: true
-
     - name: Build in muslrust Docker (static musl)
       uses: addnab/docker-run-action@v3
       with:
         image: clux/muslrust:stable
         options: -v ${{ github.workspace }}:/work -w /work
         run: |
-          set -e
-          apk add --no-cache krb5-dev
           cargo update -p time --precise 0.3.36
           cargo build --release --target x86_64-unknown-linux-musl
 
