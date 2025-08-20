@@ -30,6 +30,7 @@ zip= { version = "0.6.3", default-features = false }
 rpassword = "7.2"
 ldap3 = { version = "0.11.3", default-features = false }
 winreg = { version = "0.50", optional = true }
+time = "0.3"
 
 [features]
 noargs = ["winreg"] # Only available for Windows
