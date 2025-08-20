@@ -14,14 +14,35 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Build in muslrust Docker (static musl)
-      uses: addnab/docker-run-action@v3
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y musl-tools libkrb5-dev clang llvm-dev libclang-dev
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
       with:
-        image: clux/muslrust:stable
-        options: -v ${{ github.workspace }}:/work -w /work
-        run: |
-          cargo update -p time --precise 0.3.36
-          cargo build --release --target x86_64-unknown-linux-musl
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Add musl target
+      run: rustup target add x86_64-unknown-linux-musl
+
+    - name: Update time crate
+      run: cargo update -p time --precise 0.3.36
+
+    - name: Build release static musl
+      env:
+        LIBCLANG_PATH: /usr/lib/llvm-14/lib
+      run: |
+        # 检查 libclang 路径，如需可动态查找
+        if [ ! -e /usr/lib/llvm-14/lib/libclang.so ]; then
+          LIBCLANG_PATH=$(find /usr/lib/llvm-* -name libclang.so | head -n1 | xargs dirname)
+          echo "Found libclang.so at: $LIBCLANG_PATH"
+          export LIBCLANG_PATH
+        fi
+        cargo build --release --target x86_64-unknown-linux-musl
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
